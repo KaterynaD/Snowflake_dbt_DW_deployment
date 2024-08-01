@@ -1,0 +1,68 @@
+name: Workflow to Setup Snowflake Environment
+
+on:
+  #schedule:
+  #  - cron: '*/5 * * * *' # Runs every 5 minutes  
+  workflow_dispatch: # To allow for manual trigger
+
+jobs:
+  setup_snowflake:
+    runs-on: ubuntu-latest
+
+    env: # only these are needed for this first workflow
+      FLYWAY_VERSION: 10.17.0
+      SNOW_ACCOUNT: ${{ secrets.PROD_SNOWFLAKE_ACCOUNT }}   
+      SNOW_WH: ${{ secrets.PROD_SNOWFLAKE_WAREHOUSE }} 
+      SNOW_DB: ${{ secrets.PROD_SNOWFLAKE_DB }} 
+      SNOW_SCHEMA: ${{ secrets.PROD_SNOWFLAKE_SCHEMA }}
+      SNOW_USER: ${{ secrets.PROD_SNOWFLAKE_USERNAME }}    
+      SNOW_PWD: ${{ secrets.PROD_SNOWFLAKE_PASSWORD }}
+      
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.10.12
+          
+      - name: Install DBT and Snowflake adapter
+        run: |
+          pip install dbt-core dbt-snowflake                
+
+      - name: Set up dbt profile
+        run: |
+          mkdir -p ~/.dbt
+          echo "
+          dbt_DW_SPINN:
+            outputs:
+              dev:
+                account:  $SNOW_ACCOUNT
+                database: $SNOW_DB
+                password: $SNOW_PWD
+                role: AccountAdmin
+                schema: $SNOW_SCHEMA
+                threads: 1
+                type: snowflake
+                user: $SNOW_USER
+                warehouse: $SNOW_WH
+            target: dev
+          " > ~/.dbt/profiles.yml
+        env:
+          SNOWFLAKE_ACCOUNT: ${{ secrets.PROD_SNOWFLAKE_ACCOUNT }}
+          SNOWFLAKE_USER: ${{ secrets.PROD_SNOWFLAKE_USERNAME }}
+          SNOWFLAKE_PASSWORD: ${{ secrets.PROD_SNOWFLAKE_PASSWORD }}
+          SNOWFLAKE_ROLE: AccountAdmin
+          SNOWFLAKE_DATABASE: ${{ secrets.PROD_SNOWFLAKE_DATABASE }}
+          SNOWFLAKE_WAREHOUSE: ${{ secrets.PROD_SNOWFLAKE_WAREHOUSE }}
+          SNOWFLAKE_SCHEMA: ${{ secrets.PROD_SNOWFLAKE_SCHEMA }}
+
+      - name: DBT deps
+        working-directory: ./dbt_DW_SPINN
+        run: dbt deps                    
+
+      - name: DBT run
+        working-directory: ./dbt_DW_SPINN      
+        run: dbt run          

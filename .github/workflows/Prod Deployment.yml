@@ -1,0 +1,53 @@
+name: Workflow to Setup Snowflake Environment
+
+on:
+  push:
+    branches:
+      - PROD
+
+jobs:
+  setup_snowflake:
+    runs-on: ubuntu-latest
+
+    env: # only these are needed for this first workflow
+      FLYWAY_VERSION: 10.17.0
+      SNOW_ACCOUNT: ${{ secrets.PROD_SNOWFLAKE_ACCOUNT }}   
+      SNOW_WH: ${{ secrets.PROD_SNOWFLAKE_WAREHOUSE }} 
+      SNOW_DB: ${{ secrets.PROD_SNOWFLAKE_DB }} 
+      SNOW_SCHEMA: ${{ secrets.PROD_SNOWFLAKE_SCHEMA }}
+      SNOW_USER: ${{ secrets.PROD_SNOWFLAKE_USERNAME }}    
+      SNOW_PWD: ${{ secrets.PROD_SNOWFLAKE_PASSWORD }}
+      
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install Flyway
+        run: |
+          wget -qO- https://download.red-gate.com/maven/release/org/flywaydb/enterprise/flyway-commandline/${{ env.FLYWAY_VERSION }}/flyway-commandline-${{ env.FLYWAY_VERSION }}-linux-x64.tar.gz | tar -xvz && sudo ln -s `pwd`/flyway-${{ env.FLYWAY_VERSION }}/flyway /usr/local/bin      
+
+      - name: Run Flyway Migrations
+        env:
+         FLYWAY_URL: jdbc:snowflake://${{ env.SNOW_ACCOUNT }}.snowflakecomputing.com/?db=${{ env.SNOW_DB }}&warehouse=${{ env.SNOW_WH }}&jdbc_query_result_format=json
+         FLYWAY_USER: ${{ env.SNOW_USER }}
+         FLYWAY_PASSWORD: ${{ env.SNOW_PWD }}
+         FLYWAY_DEFAULT_SCHEMA: ${{ env.SNOW_SCHEMA }}
+         FLYWAY_LOCATIONS: filesystem:./sql_DW_SPINN
+        run: |
+         flyway migrate          
+
+      - name: Flyway info and write result to file
+        env:
+         FLYWAY_URL: jdbc:snowflake://${{ env.SNOW_ACCOUNT }}.snowflakecomputing.com/?db=${{ env.SNOW_DB }}&warehouse=${{ env.SNOW_WH }}&jdbc_query_result_format=json
+         FLYWAY_USER: ${{ env.SNOW_USER }}
+         FLYWAY_PASSWORD: ${{ env.SNOW_PWD }}
+         FLYWAY_DEFAULT_SCHEMA: ${{ env.SNOW_SCHEMA }}
+         FLYWAY_LOCATIONS: filesystem:./sql_DW_SPINN      
+        run: |
+         flyway info > ./migration_status_DW_SPINN/$(date -u +"%Y-%m-%d|%H:%M:%S")-${{ env.SNOW_DB }}-${{ env.SNOW_SCHEMA }}.txt          
+
+      - name: Commit changes
+        uses: EndBug/add-and-commit@v9
+        with:
+         add: './migration_status_DW_SPINN/*-${{ env.SNOW_DB }}-${{ env.SNOW_SCHEMA }}.txt'  

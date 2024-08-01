@@ -76,7 +76,7 @@ jobs:
                 threads: 1
                 type: snowflake
                 user: $SNOW_USER
-                warehouse: $SNOWFLAKE_WAREHOUSE
+                warehouse: $SNOW_WH
             target: dev
           " > ~/.dbt/profiles.yml
         env:
