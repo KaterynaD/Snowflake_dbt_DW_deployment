@@ -33,7 +33,7 @@ jobs:
          FLYWAY_USER: ${{ env.SNOW_USER }}
          FLYWAY_PASSWORD: ${{ env.SNOW_PWD }}
          FLYWAY_DEFAULT_SCHEMA: ${{ env.SNOW_SCHEMA }}
-         FLYWAY_LOCATIONS: filesystem:./sql
+         FLYWAY_LOCATIONS: filesystem:./sql_DW_SPINN
         run: |
          flyway migrate          
 
