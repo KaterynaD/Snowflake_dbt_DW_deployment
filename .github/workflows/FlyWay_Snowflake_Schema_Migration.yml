@@ -1,0 +1,101 @@
+name: Workflow to Setup Snowflake Environment
+
+on:
+  push:
+    branches:
+      - QA
+
+jobs:
+  setup_snowflake:
+    runs-on: ubuntu-latest
+
+    env: # only these are needed for this first workflow
+      FLYWAY_VERSION: 10.17.0
+      SNOW_ACCOUNT: ${{ secrets.QA_SNOWFLAKE_ACCOUNT }}   
+      SNOW_WH: ${{ secrets.QA_SNOWFLAKE_WAREHOUSE }} 
+      SNOW_DB: ${{ secrets.QA_SNOWFLAKE_DB }} 
+      SNOW_SCHEMA: ${{ secrets.QA_SNOWFLAKE_SCHEMA }}
+      SNOW_USER: ${{ secrets.QA_SNOWFLAKE_USERNAME }}    
+      SNOW_PWD: ${{ secrets.QA_SNOWFLAKE_PASSWORD }}
+      
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install Flyway
+        run: |
+          wget -qO- https://download.red-gate.com/maven/release/org/flywaydb/enterprise/flyway-commandline/${{ env.FLYWAY_VERSION }}/flyway-commandline-${{ env.FLYWAY_VERSION }}-linux-x64.tar.gz | tar -xvz && sudo ln -s `pwd`/flyway-${{ env.FLYWAY_VERSION }}/flyway /usr/local/bin      
+
+      - name: Run Flyway Migrations
+        env:
+         FLYWAY_URL: jdbc:snowflake://${{ env.SNOW_ACCOUNT }}.snowflakecomputing.com/?db=${{ env.SNOW_DB }}&warehouse=${{ env.SNOW_WH }}&jdbc_query_result_format=json
+         FLYWAY_USER: ${{ env.SNOW_USER }}
+         FLYWAY_PASSWORD: ${{ env.SNOW_PWD }}
+         FLYWAY_DEFAULT_SCHEMA: ${{ env.SNOW_SCHEMA }}
+         FLYWAY_LOCATIONS: filesystem:./sql
+        run: |
+         flyway migrate          
+
+      - name: Flyway info and write result to file
+        env:
+         FLYWAY_URL: jdbc:snowflake://${{ env.SNOW_ACCOUNT }}.snowflakecomputing.com/?db=${{ env.SNOW_DB }}&warehouse=${{ env.SNOW_WH }}&jdbc_query_result_format=json
+         FLYWAY_USER: ${{ env.SNOW_USER }}
+         FLYWAY_PASSWORD: ${{ env.SNOW_PWD }}
+         FLYWAY_DEFAULT_SCHEMA: ${{ env.SNOW_SCHEMA }}
+         FLYWAY_LOCATIONS: filesystem:./sql_DW_SPINN      
+        run: |
+         flyway info > ./migration-status/$(date -u +"%Y-%m-%d|%H:%M:%S")-${{ env.SNOW_DB }}-${{ env.SNOW_SCHEMA }}.txt          
+
+      - name: Commit changes
+        uses: EndBug/add-and-commit@v9
+        with:
+         add: './migration-status/*-${{ env.SNOW_DB }}-${{ env.SNOW_SCHEMA }}.txt'  
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.10.12
+          
+      - name: Install DBT and Snowflake adapter
+        run: |
+          pip install dbt-core dbt-snowflake                
+
+      - name: Set up dbt profile
+        run: |
+          mkdir -p ~/.dbt
+          echo "
+          dbt_DW_SPINN:
+            outputs:
+              dev:
+                account:  $SNOW_ACCOUNT
+                database: $SNOW_DB
+                password: $SNOW_PWD
+                role: AccountAdmin
+                schema: $SNOW_SCHEMA
+                threads: 1
+                type: snowflake
+                user: $SNOW_USER
+                warehouse: $SNOWFLAKE_WAREHOUSE
+            target: dev
+          " > ~/.dbt/profiles.yml
+        env:
+          SNOWFLAKE_ACCOUNT: ${{ secrets.QA_SNOWFLAKE_ACCOUNT }}
+          SNOWFLAKE_USER: ${{ secrets.QA_SNOWFLAKE_USERNAME }}
+          SNOWFLAKE_PASSWORD: ${{ secrets.QA_SNOWFLAKE_PASSWORD }}
+          SNOWFLAKE_ROLE: AccountAdmin
+          SNOWFLAKE_DATABASE: ${{ secrets.QA_SNOWFLAKE_DATABASE }}
+          SNOWFLAKE_WAREHOUSE: ${{ secrets.QA_SNOWFLAKE_WAREHOUSE }}
+          SNOWFLAKE_SCHEMA: ${{ secrets.QA_SNOWFLAKE_SCHEMA }}
+
+      - name: DBT deps
+        working-directory: ./dbt_DW_SPINN
+        run: dbt deps                    
+
+      - name: DBT run
+        working-directory: ./dbt_DW_SPINN      
+        run: dbt run  
+
+      - name: DBT test
+        working-directory: ./dbt_DW_SPINN      
+        run: dbt test          

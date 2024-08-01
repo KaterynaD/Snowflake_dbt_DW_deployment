@@ -1,0 +1,20 @@
+
+version: 2
+sources:
+  - name: SPINN_stg
+    database: SPINN_DB
+    schema: PRODCSE
+    tables:
+      - name: BasicPolicy
+models:
+  - name: dim_policy 
+    config:
+      tags:
+        - dim        
+    description: "Policy dimension"
+    columns:
+      - name: policy_id
+        description: "The primary key for this table"
+        tests:
+          - unique
+          - not_null
