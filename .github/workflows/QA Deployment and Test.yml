@@ -45,12 +45,12 @@ jobs:
          FLYWAY_DEFAULT_SCHEMA: ${{ env.SNOW_SCHEMA }}
          FLYWAY_LOCATIONS: filesystem:./sql_DW_SPINN      
         run: |
-         flyway info > ./migration-status/$(date -u +"%Y-%m-%d|%H:%M:%S")-${{ env.SNOW_DB }}-${{ env.SNOW_SCHEMA }}.txt          
+         flyway info > ./migration_status_DW_SPINN/$(date -u +"%Y-%m-%d|%H:%M:%S")-${{ env.SNOW_DB }}-${{ env.SNOW_SCHEMA }}.txt          
 
       - name: Commit changes
         uses: EndBug/add-and-commit@v9
         with:
-         add: './migration-status/*-${{ env.SNOW_DB }}-${{ env.SNOW_SCHEMA }}.txt'  
+         add: './migration_status_DW_SPINN/*-${{ env.SNOW_DB }}-${{ env.SNOW_SCHEMA }}.txt'  
 
       - name: Set up Python
         uses: actions/setup-python@v2
