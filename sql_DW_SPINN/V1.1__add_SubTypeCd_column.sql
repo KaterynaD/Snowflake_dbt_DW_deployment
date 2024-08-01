@@ -1,0 +1,1 @@
+alter table DEV_DB.DW_SPINN.DIM_POLICY add column SubTypeCd varchar(500) default '~' not null;
