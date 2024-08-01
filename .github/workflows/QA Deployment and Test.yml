@@ -1,4 +1,4 @@
-name: Workflow to Setup Snowflake Environment
+name: QA Deployment and Test
 
 on:
   push:
@@ -99,3 +99,16 @@ jobs:
       - name: DBT test
         working-directory: ./dbt_DW_SPINN      
         run: dbt test          
+
+      - name: Set Git config
+        run: |
+            git config --local user.email "drogaieva@gmail.com"
+            git config --local user.name "KaterynaD"
+
+      - name: Merge master back to dev
+        run: |
+            git fetch --unshallow
+            git checkout PROD
+            git pull
+            git merge --no-ff QA -m "Auto-merge QA  to PROD"
+            git push        

@@ -1,4 +1,4 @@
-name: Workflow to Setup Snowflake Environment
+name: Prod dbt run
 
 on:
   #schedule:
