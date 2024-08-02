@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - PROD
+  workflow_call:
 
 jobs:
   setup_snowflake:
