@@ -1,4 +1,4 @@
-CREATE OR REPLACE TABLE  DEV_DB.DW_SPINN.DIM_POLICY
+CREATE OR REPLACE TABLE  DIM_POLICY
 (
      policy_id VARCHAR(100) not null
 	,policy_uniqueid VARCHAR(100) not null
