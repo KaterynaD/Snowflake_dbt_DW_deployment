@@ -6,7 +6,7 @@ on:
       - QA
 
 jobs:
-  setup_snowflake:
+  deploy_schema_and_dbt:
     runs-on: ubuntu-latest
 
     env: # only these are needed for this first workflow
@@ -26,7 +26,8 @@ jobs:
       PROD_SNOW_USER: ${{ secrets.PROD_SNOWFLAKE_USERNAME }}    
       PROD_SNOW_PWD: ${{ secrets.PROD_SNOWFLAKE_PASSWORD }}
       PROD_SNOW_ROLE: ${{ secrets.PROD_SNOWFLAKE_ROLE }}
-
+    
+    if: github.ref == 'refs/heads/QA'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3

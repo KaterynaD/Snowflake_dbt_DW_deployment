@@ -6,7 +6,7 @@ on:
   workflow_dispatch: # To allow for manual trigger
 
 jobs:
-  setup_snowflake:
+  run_dbt:
     runs-on: ubuntu-latest
 
     env: # only these are needed for this first workflow

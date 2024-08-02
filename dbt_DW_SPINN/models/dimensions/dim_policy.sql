@@ -12,7 +12,6 @@ distinct
  ,coalesce(stg.policynumber,'~') as  policynumber
  ,coalesce(stg.effectivedate,'1900-01-01') as  effectivedate
  ,coalesce(stg.expirationdate,'1900-01-01') as  expirationdate
- ,coalesce(stg.subtypecd,'~') as subtypecd
 from {{ source('SPINN_stg', 'BasicPolicy') }} stg
 
 {% if is_incremental() %}
@@ -35,5 +34,4 @@ select
  ,policynumber
  ,effectivedate
  ,expirationdate
- ,subtypecd
 from data
