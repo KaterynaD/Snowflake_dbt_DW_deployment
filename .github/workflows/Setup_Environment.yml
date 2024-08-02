@@ -2,30 +2,35 @@ name: Setup Snowflake Environment
 
 on:
   # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
-    inputs:
-     SNOW_ACCOUNT:
-        description: 'Snowflake Account'
-        required: true
-        type: string
-     SNOW_USER:
-        type: string
-        description: 'Snowflake User'
-        required: true
-     SNOW_Password:
-            type: password
-            description: 'Snowflake Password'
-            required: true
+ workflow_dispatch:
+
+  inputs:
+
+   SNOW_ACCOUNT:
+    description: 'Snowflake Account'
+    required: true
+    type: string
+
+   SNOW_USER:
+    type: string
+    description: 'Snowflake User'
+    required: true
+
+   SNOW_Password:
+    type: string
+    description: 'Snowflake Password'
+    required: true
 
 jobs:
  setup_snowflake:
   runs-on: ubuntu-latest
 
   env: # only these are needed for this first workflow
-   SNOWSQL_PWD: ${{ input.SNOW_Password }}
-   SNOWSQL_ACCOUNT: ${{ input.SNOW_ACCOUNT }}
-   SNOWSQL_USER: ${{ input.SNOW_USER }}  
+   SNOWSQL_PWD: ${{ inputs.SNOW_Password }}
+   SNOWSQL_ACCOUNT: ${{ inputs.SNOW_ACCOUNT }}
+   SNOWSQL_USER: ${{ inputs.SNOW_USER }}  
 
+  if: github.ref == 'refs/heads/dev'
   steps:
     - name: Checkout repository
       uses: actions/checkout@v3
