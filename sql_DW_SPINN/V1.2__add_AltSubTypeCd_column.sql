@@ -1,0 +1,1 @@
+alter table DIM_POLICY add column AltSubTypeCd varchar(500) default '~' not null;
