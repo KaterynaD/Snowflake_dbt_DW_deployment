@@ -1,0 +1,46 @@
+name: Setup Snowflake Environment
+
+on:
+  # Allows you to run this workflow manually from the Actions tab
+ workflow_dispatch:
+
+  inputs:
+
+   SNOW_ACCOUNT:
+    description: 'Snowflake Account'
+    required: true
+    type: string
+
+   SNOW_USER:
+    type: string
+    description: 'Snowflake User'
+    required: true
+
+   SNOW_Password:
+    type: string
+    description: 'Snowflake Password'
+    required: true
+
+jobs:
+ setup_snowflake:
+  runs-on: ubuntu-latest
+
+  env: # only these are needed for this first workflow
+   SNOWSQL_PWD: ${{ inputs.SNOW_Password }}
+   SNOWSQL_ACCOUNT: ${{ inputs.SNOW_ACCOUNT }}
+   SNOWSQL_USER: ${{ inputs.SNOW_USER }}  
+
+  if: github.ref == 'refs/heads/dev'
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Install SnowSQL
+      run: |
+        curl -O https://sfc-repo.snowflakecomputing.com/snowsql/bootstrap/1.2/linux_x86_64/snowsql-1.2.9-linux_x86_64.bash
+        SNOWSQL_DEST=~/bin SNOWSQL_LOGIN_SHELL=~/.profile bash snowsql-1.2.9-linux_x86_64.bash
+
+    - name: Execute Snowflake Setup Script
+      run: |
+        echo "Executing Snowflake Setup Script"
+        ~/bin/snowsql -f ./Setup/Snowflake_Environment_Setup.sql  
