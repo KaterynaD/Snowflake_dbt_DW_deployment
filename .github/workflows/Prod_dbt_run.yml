@@ -17,7 +17,7 @@ jobs:
       SNOW_SCHEMA: ${{ secrets.PROD_SNOWFLAKE_SCHEMA }}
       SNOW_USER: ${{ secrets.PROD_SNOWFLAKE_USERNAME }}    
       SNOW_PWD: ${{ secrets.PROD_SNOWFLAKE_PASSWORD }}
-      
+      SNOW_ROLE: ${{ secrets.PROD_SNOWFLAKE_ROLE }}
 
     steps:
       - name: Checkout repository
@@ -42,7 +42,7 @@ jobs:
                 account:  $SNOW_ACCOUNT
                 database: $SNOW_DB
                 password: $SNOW_PWD
-                role: AccountAdmin
+                role: $SNOW_ROLE
                 schema: $SNOW_SCHEMA
                 threads: 1
                 type: snowflake
@@ -54,7 +54,7 @@ jobs:
           SNOWFLAKE_ACCOUNT: ${{ secrets.PROD_SNOWFLAKE_ACCOUNT }}
           SNOWFLAKE_USER: ${{ secrets.PROD_SNOWFLAKE_USERNAME }}
           SNOWFLAKE_PASSWORD: ${{ secrets.PROD_SNOWFLAKE_PASSWORD }}
-          SNOWFLAKE_ROLE: AccountAdmin
+          SNOWFLAKE_ROLE: $SNOW_ROLE
           SNOWFLAKE_DATABASE: ${{ secrets.PROD_SNOWFLAKE_DATABASE }}
           SNOWFLAKE_WAREHOUSE: ${{ secrets.PROD_SNOWFLAKE_WAREHOUSE }}
           SNOWFLAKE_SCHEMA: ${{ secrets.PROD_SNOWFLAKE_SCHEMA }}
