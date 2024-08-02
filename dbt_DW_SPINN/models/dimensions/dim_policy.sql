@@ -13,6 +13,7 @@ distinct
  ,coalesce(stg.effectivedate,'1900-01-01') as  effectivedate
  ,coalesce(stg.expirationdate,'1900-01-01') as  expirationdate
  ,coalesce(stg.subtypecd,'~') as subtypecd
+ ,coalesce(stg.altsubtypecd,'~') as altsubtypecd 
 from {{ source('SPINN_stg', 'BasicPolicy') }} stg
 
 {% if is_incremental() %}
@@ -36,4 +37,5 @@ select
  ,effectivedate
  ,expirationdate
  ,subtypecd
+ ,altsubtypecd 
 from data
