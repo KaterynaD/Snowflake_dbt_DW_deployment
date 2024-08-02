@@ -1,4 +1,4 @@
-name: QA Deployment and Test
+name: QA Deployment and Test PROD Deployment
 
 on:
   push:
@@ -17,7 +17,15 @@ jobs:
       SNOW_SCHEMA: ${{ secrets.QA_SNOWFLAKE_SCHEMA }}
       SNOW_USER: ${{ secrets.QA_SNOWFLAKE_USERNAME }}    
       SNOW_PWD: ${{ secrets.QA_SNOWFLAKE_PASSWORD }}
-      
+      SNOW_ROLE: ${{ secrets.QA_SNOWFLAKE_ROLE }}
+
+      PROD_SNOW_ACCOUNT: ${{ secrets.PROD_SNOWFLAKE_ACCOUNT }}   
+      PROD_SNOW_WH: ${{ secrets.PROD_SNOWFLAKE_WAREHOUSE }} 
+      PROD_SNOW_DB: ${{ secrets.PROD_SNOWFLAKE_DB }} 
+      PROD_SNOW_SCHEMA: ${{ secrets.PROD_SNOWFLAKE_SCHEMA }}
+      PROD_SNOW_USER: ${{ secrets.PROD_SNOWFLAKE_USERNAME }}    
+      PROD_SNOW_PWD: ${{ secrets.PROD_SNOWFLAKE_PASSWORD }}
+      PROD_SNOW_ROLE: ${{ secrets.PROD_SNOWFLAKE_ROLE }}
 
     steps:
       - name: Checkout repository
@@ -27,7 +35,7 @@ jobs:
         run: |
           wget -qO- https://download.red-gate.com/maven/release/org/flywaydb/enterprise/flyway-commandline/${{ env.FLYWAY_VERSION }}/flyway-commandline-${{ env.FLYWAY_VERSION }}-linux-x64.tar.gz | tar -xvz && sudo ln -s `pwd`/flyway-${{ env.FLYWAY_VERSION }}/flyway /usr/local/bin      
 
-      - name: Run Flyway Migrations
+      - name: QA Run Flyway Migrations
         env:
          FLYWAY_URL: jdbc:snowflake://${{ env.SNOW_ACCOUNT }}.snowflakecomputing.com/?db=${{ env.SNOW_DB }}&warehouse=${{ env.SNOW_WH }}&jdbc_query_result_format=json
          FLYWAY_USER: ${{ env.SNOW_USER }}
@@ -37,7 +45,7 @@ jobs:
         run: |
          flyway migrate          
 
-      - name: Flyway info and write result to file
+      - name: QA Flyway info and write result to file
         env:
          FLYWAY_URL: jdbc:snowflake://${{ env.SNOW_ACCOUNT }}.snowflakecomputing.com/?db=${{ env.SNOW_DB }}&warehouse=${{ env.SNOW_WH }}&jdbc_query_result_format=json
          FLYWAY_USER: ${{ env.SNOW_USER }}
@@ -47,7 +55,7 @@ jobs:
         run: |
          flyway info > ./migration_status_DW_SPINN/$(date -u +"%Y-%m-%d|%H:%M:%S")-${{ env.SNOW_DB }}-${{ env.SNOW_SCHEMA }}.txt          
 
-      - name: Commit changes
+      - name: QA Commit changes
         uses: EndBug/add-and-commit@v9
         with:
          add: './migration_status_DW_SPINN/*-${{ env.SNOW_DB }}-${{ env.SNOW_SCHEMA }}.txt'  
@@ -71,7 +79,7 @@ jobs:
                 account:  $SNOW_ACCOUNT
                 database: $SNOW_DB
                 password: $SNOW_PWD
-                role: AccountAdmin
+                role: $SNOW_ROLE
                 schema: $SNOW_SCHEMA
                 threads: 1
                 type: snowflake
@@ -83,34 +91,57 @@ jobs:
           SNOWFLAKE_ACCOUNT: ${{ secrets.QA_SNOWFLAKE_ACCOUNT }}
           SNOWFLAKE_USER: ${{ secrets.QA_SNOWFLAKE_USERNAME }}
           SNOWFLAKE_PASSWORD: ${{ secrets.QA_SNOWFLAKE_PASSWORD }}
-          SNOWFLAKE_ROLE: AccountAdmin
+          SNOWFLAKE_ROLE: $SNOW_ROLE
           SNOWFLAKE_DATABASE: ${{ secrets.QA_SNOWFLAKE_DATABASE }}
           SNOWFLAKE_WAREHOUSE: ${{ secrets.QA_SNOWFLAKE_WAREHOUSE }}
           SNOWFLAKE_SCHEMA: ${{ secrets.QA_SNOWFLAKE_SCHEMA }}
 
-      - name: DBT deps
+      - name: QA DBT deps
         working-directory: ./dbt_DW_SPINN
         run: dbt deps                    
 
-      - name: DBT run
+      - name: QA DBT run
         working-directory: ./dbt_DW_SPINN      
         run: dbt run  
 
-      - name: DBT test
+      - name: QA DBT test
         working-directory: ./dbt_DW_SPINN      
         run: dbt test          
 
+      - name: PROD Run Flyway Migrations
+        env:
+         FLYWAY_URL: jdbc:snowflake://${{ env.PROD_SNOW_ACCOUNT }}.snowflakecomputing.com/?db=${{ env.PROD_SNOW_DB }}&warehouse=${{ env.PROD_SNOW_WH }}&jdbc_query_result_format=json
+         FLYWAY_USER: ${{ env.PROD_SNOW_USER }}
+         FLYWAY_PASSWORD: ${{ env.PROD_SNOW_PWD }}
+         FLYWAY_DEFAULT_SCHEMA: ${{ env.PROD_SNOW_SCHEMA }}
+         FLYWAY_LOCATIONS: filesystem:./sql_DW_SPINN
+        run: |
+          flyway migrate           
+           
+      - name: PROD Flyway info and write result to file
+        env:
+         FLYWAY_URL: jdbc:snowflake://${{ env.PROD_SNOW_ACCOUNT }}.snowflakecomputing.com/?db=${{ env.PROD_SNOW_DB }}&warehouse=${{ env.PROD_SNOW_WH }}&jdbc_query_result_format=json
+         FLYWAY_USER: ${{ env.PROD_SNOW_USER }}
+         FLYWAY_PASSWORD: ${{ env.PROD_SNOW_PWD }}
+         FLYWAY_DEFAULT_SCHEMA: ${{ env.PROD_SNOW_SCHEMA }}
+         FLYWAY_LOCATIONS: filesystem:./sql_DW_SPINN
+        run: |
+         flyway info > ./migration_status_DW_SPINN/$(date -u +"%Y-%m-%d|%H:%M:%S")-${{ env.PROD_SNOW_DB }}-${{ env.PROD_SNOW_SCHEMA }}.txt          
+    
+      - name: PROD Commit changes
+        uses: EndBug/add-and-commit@v9
+        with:
+          add: './migration_status_DW_SPINN/*-${{ env.PROD_SNOW_DB }}-${{ env.PROD_SNOW_SCHEMA }}.txt'     
+          
       - name: Set Git config
         run: |
-            git config --local user.email "drogaieva@gmail.com"
-            git config --local user.name "KaterynaD"
-
+         git config --local user.email "drogaieva@gmail.com"
+         git config --local user.name "KaterynaD"
+  
       - name: Merge QA to PROD
         run: |
-            git fetch --unshallow
-            git checkout PROD
-            git pull
-            git merge --no-ff QA -m "Auto-merge QA  to PROD"
-            git push 
-  call-workflow:
-    uses: ./.github/workflows/Prod_Deployment.yml       
+         git fetch --unshallow
+         git checkout PROD
+         git pull
+         git merge --no-ff QA -m "Auto-merge QA to PROD - $(date -u +"%Y-%m-%d|%H:%M:%S")"
+         git push           
