@@ -6,7 +6,7 @@ on:
       - QA
 
 jobs:
-  setup_snowflake:
+  deploy_schema_and_dbt:
     runs-on: ubuntu-latest
 
     env: # only these are needed for this first workflow
