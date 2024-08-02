@@ -1,0 +1,15 @@
+Flyway Community Edition 10.17.0 by Redgate
+
+See release notes here: https://rd.gt/416ObMi
+QUOTED_IDENTIFIERS_IGNORE_CASE option is false
+Database: jdbc:snowflake://hldvutt-xjb80646.snowflakecomputing.com:443/ (Snowflake 8.28)
+
+You are not signed in to Flyway, to sign in please run auth
+Schema version: 1.0
+
++-----------+---------+---------------+------+---------------------+---------+----------+
+| Category  | Version | Description   | Type | Installed On        | State   | Undoable |
++-----------+---------+---------------+------+---------------------+---------+----------+
+| Versioned | 1.0     | Create Tables | SQL  | 2024-08-02 17:11:25 | Success | No       |
++-----------+---------+---------------+------+---------------------+---------+----------+
+
