@@ -113,4 +113,4 @@ jobs:
             git merge --no-ff QA -m "Auto-merge QA  to PROD"
             git push 
   call-workflow:
-    uses: ./.github/workflows/Prod_Deployment.yaml       
+    uses: ./.github/workflows/Prod_Deployment.yml       
